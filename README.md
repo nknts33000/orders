@@ -1,54 +1,227 @@
-Prereqs
+# Order Project
 
-Java 21 
+A Spring Boot application for user authentication, order management, and admin role control.
 
-Maven Wrapper is included (mvnw / mvnw.cmd); no global Maven needed.
+---
 
-MySQL accessible and reachable; create an empty database (name via DB_NAME).
+## Prerequisites
 
-Redis accessible; supply host/port.
+* **Java 21**
+* **Maven Wrapper** (included: `mvnw` / `mvnw.cmd`) — no global Maven required
+* **MySQL** accessible and running
 
-Environment secrets/vars (from src/main/resources/application.properties):
+  * Create an **empty database** (name provided via `DB_NAME`)
+* **Redis** accessible and running
+
+---
+
+## Configuration
+
+The application uses environment variables defined in `src/main/resources/application.properties`.
+
+### Required Environment Variables
+
+```text
 JWT_SECRET
-DB_ADDRESS (e.g., localhost)
-DB_PORT (e.g., 3306)
+DB_ADDRESS        # e.g. localhost
+DB_PORT           # e.g. 3306
 DB_NAME
 DB_USERNAME
 DB_PASSWORD
-REDIS_ADDRESS (e.g., localhost)
-REDIS_PORT (e.g., 6379)
-One-time setup
-Install Java 21.
-Ensure MySQL is running; create a database for this app and a user with full rights on it.
-Ensure Redis is running and reachable.
-Clone the repo.
-Configure environment:
-PowerShell example (adjust values):
-  setx JWT_SECRET "...  setx DB_ADDRESS "..."  setx DB_PORT "..."  setx DB_NAME "..."  setx DB_USERNAME "..."  setx DB_PASSWORD "..."  setx REDIS_ADDRESS "..."  setx REDIS_PORT "..."
-Restart the shell (or set in the same session with $env:VAR="value" before running).
-nix shell example:
-  export JWT_SECRET=...  export DB_ADDRESS=...  export DB_PORT=...  export DB_NAME=...  export DB_USERNAME=...  export DB_PASSWORD=...  export REDIS_ADDRESS=...  export REDIS_PORT=...
-Build & run (from repo root)
-Windows:
-  ./mvnw.cmd clean package  ./mvnw.cmd spring-boot:run
-macOS/Linux:
-  ./mvnw clean package  ./mvnw spring-boot:run
-The app defaults to port 8080 (Spring Boot default).
-Quick smoke test (HTTP)
-Use any REST client (curl/Postman). Replace placeholders with real values.
-Register user:
-  POST http://localhost:8080/auth/register  body: { "username": "alice", "password": "password123" }
-Login to get JWT:
-  POST http://localhost:8080/auth/login  body: { "username": "alice", "password": "password123" }
-Response contains token.
-Create order (needs Bearer <token>):
-  POST http://localhost:8080/order/create  headers: Authorization: Bearer <token>  body: { "description": "..." }   // per OrderRequest fields
-Fetch orders:
-  GET http://localhost:8080/order/get-all?page=0&size=10  headers: Authorization: Bearer <token> 
-Admin-only role change (requires admin token):
-  PUT http://localhost:8080/admin/change-status  body: { "userId": 1, "userRole": "ADMIN" }
-Troubleshooting tips
-If build fails for Java version, confirm java -version is 21.
-If DB connection fails, verify env vars and that MySQL user has rights on DB_NAME.
-If Redis connection fails, ensure REDIS_ADDRESS/PORT match the running instance.
-For token errors, ensure Authorization header is Bearer <token> (with the space).
+REDIS_ADDRESS     # e.g. localhost
+REDIS_PORT        # e.g. 6379
+```
+
+---
+
+## One-Time Setup
+
+### 1. Install Java 21
+
+Verify installation:
+
+```bash
+java -version
+```
+
+### 2. Database Setup (MySQL)
+
+* Ensure MySQL is running
+* Create a database for the application
+* Create a user with full privileges on that database
+
+### 3. Redis Setup
+
+* Ensure Redis is running and reachable
+* Note the host and port
+
+### 4. Clone the Repository
+
+```bash
+git clone <your-repo-url>
+cd order-project
+```
+
+### 5. Configure Environment Variables
+
+#### Windows (PowerShell)
+
+```powershell
+setx JWT_SECRET "..."
+setx DB_ADDRESS "..."
+setx DB_PORT "..."
+setx DB_NAME "..."
+setx DB_USERNAME "..."
+setx DB_PASSWORD "..."
+setx REDIS_ADDRESS "..."
+setx REDIS_PORT "..."
+```
+
+Restart the shell after running `setx`.
+
+Alternatively, for the same session only:
+
+```powershell
+$env:JWT_SECRET="your-secret"
+```
+
+#### macOS / Linux
+
+```bash
+export JWT_SECRET=...
+export DB_ADDRESS=...
+export DB_PORT=...
+export DB_NAME=...
+export DB_USERNAME=...
+export DB_PASSWORD=...
+export REDIS_ADDRESS=...
+export REDIS_PORT=...
+```
+
+---
+
+## Build & Run
+
+From the repository root:
+
+### Windows
+
+```bash
+./mvnw.cmd clean package
+./mvnw.cmd spring-boot:run
+```
+
+### macOS / Linux
+
+```bash
+./mvnw clean package
+./mvnw spring-boot:run
+```
+
+The application starts on **port 8080** by default.
+
+---
+
+## Quick Smoke Test (HTTP)
+
+You can use **curl**, **Postman**, or any REST client.
+
+### 1. Register User
+
+```http
+POST http://localhost:8080/auth/register
+Content-Type: application/json
+
+{
+  "username": "alice",
+  "password": "password123"
+}
+```
+
+### 2. Login (Get JWT)
+
+```http
+POST http://localhost:8080/auth/login
+Content-Type: application/json
+
+{
+  "username": "alice",
+  "password": "password123"
+}
+```
+
+Response contains a JWT token.
+
+---
+
+### 3. Create Order (Authenticated)
+
+```http
+POST http://localhost:8080/order/create
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "description": "Sample order"
+}
+```
+
+*(Fields depend on `OrderRequest`)*
+
+---
+
+### 4. Fetch Orders
+
+```http
+GET http://localhost:8080/order/get-all?page=0&size=10
+Authorization: Bearer <token>
+```
+
+---
+
+### 5. Admin-Only: Change User Role
+
+Requires an **admin JWT token**.
+
+```http
+PUT http://localhost:8080/admin/change-status
+Content-Type: application/json
+
+{
+  "userId": 1,
+  "userRole": "ADMIN"
+}
+```
+
+---
+
+## Troubleshooting
+
+* **Java version errors**: ensure `java -version` reports **21**
+* **Database connection errors**:
+
+  * Verify DB environment variables
+  * Ensure MySQL user has privileges on `DB_NAME`
+* **Redis connection errors**:
+
+  * Verify `REDIS_ADDRESS` and `REDIS_PORT`
+* **JWT / Authorization errors**:
+
+  * Ensure header format is:
+
+    ```
+    Authorization: Bearer <token>
+    ```
+
+    (note the space after `Bearer`)
+
+---
+
+## Notes
+
+* Do **not** commit secrets to the repository
+* Use environment-specific values for dev / test / prod
+
+---
+
+Happy coding 🚀
